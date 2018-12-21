@@ -147,7 +147,7 @@ base methods like `firstindex`, `lastindex`, etc. applied to an
 array returned by `flatten` is guaranteed to have 1-based linear indexing and
 column-major storage order.
 
-!!! danger
+!!! warning
     Many fast operations on flat arrays rely on the fact that the parent array
     backing the storage of the flat array is never resized (*e.g.*, with the
     [`resize!`](@ref) method).
