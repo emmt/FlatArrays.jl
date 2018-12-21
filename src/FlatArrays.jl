@@ -138,7 +138,7 @@ yields a *flat* vector `V` of length `n` whose elements are given by array `A`.
 flatten(A, m, n) -> M
 ```
 
-yields a *flat* matrix `M` of size `m` rows by `n` columns whose elements are
+yields a *flat* matrix `M` with `m` rows and `n` columns whose elements are
 given by array `A`.
 
 A *flat* array has 1-based linear indexing, column-major storage order and all
@@ -146,7 +146,8 @@ its elements are contiguous.  This may be very convenient for calling efficient
 code which expects such kind of arrays.
 
 If the argument `A` of `flatten` is already a *flat* array, the returned array
-will share the contents of `A`; otherwise a flat copy is made.
+will share the contents of `A`; otherwise an independent copy of the elements
+is made.
 
 If the contents of `A` can be shared, calling `flatten` is faster (by a factor
 ~ 7 for a vector, ~ 5 for a matrix) and uses less memory than calling
@@ -154,12 +155,17 @@ If the contents of `A` can be shared, calling `flatten` is faster (by a factor
 base methods like `firstindex`, `lastindex`, etc. applied to an
 `AbstractFlatArray` can be optimized out at compilation time.  Finally, the
 array returned by `flatten` is guaranteed to have 1-based linear indexing and
-column-major storage order.
+column-major storage order.  However, contrary to `resize`, the array returned
+by `flatten` may not share its contents with `A`.  In fact, if `isflat(A)` is
+true, then `flatten(A,...)` will return an array sharing its contents with `A`;
+otherwise, the contents is not shared.
 
 !!! warning
     Many fast operations on flat arrays rely on the fact that the parent array
     backing the storage of the flat array is never resized (*e.g.*, with the
     [`resize!`](@ref) method).
+
+See also: [`isflat`](@ref), [`resize`](@ref).
 
 """ flatten
 
@@ -209,6 +215,8 @@ end
 
 `isflat(A)` yields whether array `A` is a *flat* array, that is an array
 with 1-based indices and whose elements are all continuous.
+
+See also: [`flatten`](@ref).
 
 """
 isflat(::AbstractFlatArray) = true
