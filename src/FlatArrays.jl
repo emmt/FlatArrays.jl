@@ -21,6 +21,7 @@ import Base:
     lastindex,
     getindex,
     setindex!,
+    iterate,
     has_offset_axes,
     convert,
     unsafe_convert
@@ -104,12 +105,20 @@ axes(A::FlatMatrix, d::Integer) = (d > 2 ? OneTo(1) :
                                    d > 0 ? OneTo(A.dims[d]) :
                                    error("dimension out of range"))
 
-getindex(A::FlatVector, i) = A.parent[_index(A, i)]
-getindex(A::FlatMatrix, i) = A.parent[_index(A, i)]
+strides(A::FlatVector) = (1,)
+strides(A::FlatMatrix) = (1, size(A, 1))
+stride(A::FlatVector, d::Integer) = (d == 1 ? 1 :
+                                     d >= 2 ? length(A) :
+                                     error("dimension out of range"))
+stride(A::FlatMatrix, d::Integer) = (d == 1 ? 1 :
+                                     d == 2 ? size(A, 1) :
+                                     d >= 3 ? length(A) :
+                                     error("dimension out of range"))
+
+getindex(A::AbstractFlatArray, i) = A.parent[_index(A, i)]
 getindex(A::FlatMatrix, i, j) = A.parent[_index(A, i, j)]
 
-setindex!(A::FlatVector, x, i) = setindex!(A.parent, x, _index(A, i))
-setindex!(A::FlatMatrix, x, i) = setindex!(A.parent, x, _index(A, i))
+setindex!(A::AbstractFlatArray, x, i) = setindex!(A.parent, x, _index(A, i))
 setindex!(A::FlatMatrix, x, i, j) = setindex(A.parent, x, _index(A, i, j))
 
 _index(A::AbstractFlatArray, i::Integer) = i
@@ -159,7 +168,7 @@ flatten(arr::AbstractArray, dims::NTuple{1,Integer}) =
 flatten(arr::AbstractArray, nelem::Integer) =
     flatten(arr, Int(nelem))
 @inline flatten(arr::A, nelem::Int) where {T,A<:AbstractArray{T}} =
-    FlatVector{T,A}(_flatten(arr, nelem), nelem)
+    FlatVector(_flatten(arr, nelem), nelem)
 
 flatten(arr::AbstractArray, dims::NTuple{2,Integer}) =
     flatten(arr, dims[1], dims[2])
@@ -169,7 +178,7 @@ flatten(arr::AbstractArray, nrows::Integer, ncols::Integer) =
                          nrows::Int, ncols::Int) where {T,A<:AbstractArray{T}}
     nrows > 0 && ncols > 0 || error("invalid dimensions")
     nelem = nrows*ncols
-    return FlatMatrix{T,A}(_flatten(arr, nelem), nelem, (nrows, ncols))
+    return FlatMatrix(_flatten(arr, nelem), nelem, (nrows, ncols))
 end
 
 @inline function _flatten(A::Array, nelem::Int)
@@ -188,7 +197,7 @@ end
 end
 
 function _flatcopy(A::AbstractArray{T}, nelem::Int) :: Vector{T} where {T}
-    F = Array{T,1}(nelem)
+    F = Array{T,1}(undef, nelem)
     F[1], state = iterate(A)
     @inbounds @simd for j in 2:nelem
         F[j], state = iterate(A, state)

@@ -7,7 +7,7 @@ using Base:
     IndexStyle,
     has_offset_axes
 
-for d in 1:2,
+for d in 1:3,
     (f, g) in ((firstindex, :firstindex),
                (lastindex,  :lastindex),
                (size,       :size),
@@ -32,16 +32,23 @@ function memcpy!(A::DenseArray{T}, B::DenseArray{T}, n::Integer) where {T}
     return A
 end
 
-function samevalues(A::DenseArray{T}, B::DenseArray{T}) where {T}
+function samevalues(A::AbstractArray{T}, B::AbstractArray{T},
+                    exhaustive::Bool=false) where {T}
     @assert length(A) == length(B)
-    i = 0
+    j = 0
     for a in A
-        i += 1
-        B[i] == a || return false
+        j += 1
+        B[j] == a || return false
+    end
+    if exhaustive
+        i = 0
+        for b in B
+            i += 1
+            A[i] == b || return false
+        end
     end
     return true
 end
-
 
 @testset "FlatArrays" begin
     dims = (2,3,4,5)
@@ -62,8 +69,12 @@ end
          (size1,           nelem),
          (axes,           (1:nelem,)),
          (axis1,           1:nelem),
+         (strides,        (1,)),
+         (stride1,         1),
+         (stride2,         nelem),
          (isflat,          true),
-         (has_offset_axes, false))
+         (has_offset_axes, false),
+         (IndexStyle,      IndexLinear()))
     for i in randperm(length(Q))
         (f, r) = Q[i]
         @test f(V) == r
@@ -77,26 +88,37 @@ end
          (length,          nelem),
          (ndims,           2),
          (eltype,          eltype(A)),
-         (size,           (nrows,ncols)),
+         (size,           (nrows, ncols)),
          (size1,           nrows),
          (size2,           ncols),
          (axes,           (1:nrows, 1:ncols)),
          (axis1,           1:nrows),
          (axis2,           1:ncols),
+         (strides,        (1, nrows)),
+         (stride1,         1),
+         (stride2,         nrows),
+         (stride3,         nelem),
          (isflat,          true),
-         (has_offset_axes, false))
+         (has_offset_axes, false),
+         (IndexStyle,      IndexLinear()))
     for i in randperm(length(Q))
         (f, r) = Q[i]
         @test f(M) == r
     end
+    @test isflat(A) == true
+    @test isflat(A) == true
+    V1 = view(A, :,  :, 1:3, 3)  # flat view
+    @test isflat(V1) == true
+    V2 = view(A, :,  :, 2:3, :) # non-flat view
+    @test isflat(V2) == false
     @test reshape(A, nelem) == V
     @test reshape(A, nrows, ncols) == M
     B = similar(A, nrows, ncols)
     @test memcpy!(B, M, nelem) == reshape(A, nrows, ncols)
-    @test samevalues(B, M)
-    @test samevalues(M, B)
-    @test samevalues(B, V)
-    @test samevalues(V, B)
+    @test samevalues(B, M, true)
+    @test samevalues(B, V, true)
+    @test samevalues(flatten(V1,length(V1)), V1, true)
+    @test samevalues(flatten(V2,length(V2)), V2, true)
 end
 
 end # module
