@@ -48,3 +48,15 @@ flatten(A, m, n) -> M
 
 which yields a *flat* matrix `M` of size `m` rows by `n` columns whose elements are
 given by array `A`.
+
+
+## Installation
+
+To install FlatArrays, you must clone its repository:
+
+```sh
+using Pkg
+Pkg.clone("https://github.com/emmt/FlatArrays.git")
+```
+
+The FlatArrays package is pure Julia code and there is nothing to build.
