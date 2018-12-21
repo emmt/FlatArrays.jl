@@ -92,7 +92,7 @@ size(A::FlatVector, d::Integer) = (d == 1 ? A.nelem :
                                    d > 1 ? 1 :
                                    error("dimension out of range"))
 size(A::FlatMatrix, d::Integer) = (d > 2 ? 1 :
-                                   d > 0 ? A.dims[i] :
+                                   d > 0 ? A.dims[d] :
                                    error("dimension out of range"))
 
 axes(A::FlatVector) = (OneTo(A.nelem),)
@@ -101,7 +101,7 @@ axes(A::FlatVector, d::Integer) = (d == 1 ? OneTo(A.nelem) :
                                    d > 1 ? OneTo(1) :
                                    error("dimension out of range"))
 axes(A::FlatMatrix, d::Integer) = (d > 2 ? OneTo(1) :
-                                   d > 0 ? OneTo(A.dims[i]) :
+                                   d > 0 ? OneTo(A.dims[d]) :
                                    error("dimension out of range"))
 
 getindex(A::FlatVector, i) = A.parent[_index(A, i)]
