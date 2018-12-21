@@ -1,0 +1,6 @@
+authors = ["Éric Thiébaut <eric.thiebaut@univ-lyon1.fr>"]
+name = "FlatArrays"
+uuid = "e8886598-053c-11e9-082c-7d9043d62c38"
+version = "0.1.0"
+
+[deps]
