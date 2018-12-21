@@ -115,16 +115,27 @@ stride(A::FlatMatrix, d::Integer) = (d == 1 ? 1 :
                                      d >= 3 ? length(A) :
                                      error("dimension out of range"))
 
-getindex(A::AbstractFlatArray, i) = A.parent[_index(A, i)]
-getindex(A::FlatMatrix, i, j) = A.parent[_index(A, i, j)]
+@inline getindex(A::AbstractFlatArray, i) = getindex(A, _index(A, i))
+@inline getindex(A::AbstractFlatArray, i, j) = getindex(A, _index(A, i, j))
+@inline function getindex(A::AbstractFlatArray, i::Int)
+    @boundscheck checkbounds(A.parent, i)
+    @inbounds val = A.parent[i]
+    return val
+end
 
-setindex!(A::AbstractFlatArray, x, i) = setindex!(A.parent, x, _index(A, i))
-setindex!(A::FlatMatrix, x, i, j) = setindex(A.parent, x, _index(A, i, j))
+@inline setindex!(A::AbstractFlatArray, val, i) = setindex!(A, val, _index(A, i))
+@inline setindex!(A::AbstractFlatArray, val, i, j) = setindex!(A, val, _index(A, i, j))
+@inline function setindex!(A::AbstractFlatArray, val, i::Int)
+    @boundscheck checkbounds(A.parent, i)
+    @inbounds A.parent[i] = val
+    return val
+end
 
-_index(A::AbstractFlatArray, i::Integer) = i
-_index(A::FlatMatrix, i::Integer, j::Integer) = i + A.nrows*(j - 1)
-_index(A::FlatVector, I::CartesianIndex{1}) = I[1]
-_index(A::FlatMatrix, I::CartesianIndex{2}) = _index(I[1], I[2])
+@inline _index(A::AbstractFlatArray, i::Integer) = Int(i)
+@inline _index(A::FlatMatrix, i::Int, j::Int) = i + A.dims[1]*(j - 1)
+@inline _index(A::FlatMatrix, i::Integer, j::Integer) = _index(A, Int(i), Int(j))
+@inline _index(A::FlatVector, I::CartesianIndex{1}) = I[1]
+@inline _index(A::FlatMatrix, I::CartesianIndex{2}) = _index(A, I[1], I[2])
 
 """
 

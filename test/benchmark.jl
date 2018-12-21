@@ -14,6 +14,68 @@ function print_right_justified(str::AbstractString, len::Integer, c::Char=' ')
     print(str)
 end
 
+# Use eachindex()
+function add0!(dest::AbstractArray{T,N},
+               A::AbstractArray{T,N},
+               B::AbstractArray{T,N}) where {T,N}
+    # Checks must be skipped because they take time.
+    #@assert axes(dest) == axes(A) == axes(B)
+    @inbounds @simd for i in eachindex(dest, A, B)
+        dest[i] = A[i] + B[i]
+    end
+    return dest
+end
+
+# Use linear indexing.
+function add1!(dest::AbstractArray{T,N},
+               A::AbstractArray{T,N},
+               B::AbstractArray{T,N}) where {T,N}
+    # Checks must be skipped because they take time.
+    #@assert !Base.has_offset_axes(dest, A, B)
+    #@assert (n = length(dest)) == length(A) == length(B)
+    n = length(dest)
+    @inbounds @simd for i in Base.OneTo(n)
+        dest[i] = A[i] + B[i]
+    end
+    return dest
+end
+
+# Use 2D indexing.
+function add2!(dest::AbstractArray{T,2},
+               A::AbstractArray{T,2},
+               B::AbstractArray{T,2}) where {T}
+    # Checks must be skipped because they take time.
+    #@assert (m = size(dest,1)) == size(A,1) == size(B,1)
+    #@assert (n = size(dest,2)) == size(A,2) == size(B,2)
+    m = size(dest,1)
+    n = size(dest,2)
+    @inbounds for j in 1:n
+        @simd for i in 1:m
+            dest[i,j] = A[i,j] + B[i,j]
+        end
+    end
+    return dest
+end
+
+# Use 2D indexing + faking.
+function add2p!(dest::AbstractArray{T,2},
+                A::AbstractArray{T,2},
+                B::AbstractArray{T,2}) where {T}
+    # Checks must be skipped because they take time.
+    #@assert (m = size(dest,1)) == size(A,1) == size(B,1)
+    #@assert (n = size(dest,2)) == size(A,2) == size(B,2)
+    m = size(dest,1)
+    n = size(dest,2)
+    @inbounds for j in 1:n
+        off = m*(j - 1)
+        @simd for i in 1:m
+            k = i + off
+            dest[k] = A[k] + B[k]
+        end
+    end
+    return dest
+end
+
 function runtests()
     dims = (3,4,5,6,7)
     A = randn(dims)
@@ -31,6 +93,7 @@ function runtests()
 
     l = 30
     c = '.'
+    if false
     println("In the following tests, A is a regular array, B and C are views of A,")
     println("B is flat, C is not flat, V is a flat vector from A and M is a flat")
     println("matrix from A.")
@@ -77,6 +140,7 @@ function runtests()
     println()
     println("In the following tests, A is a regular array, R is a reshaped version of A,")
     println("M is a flat version of A and S is a random array of same size as R and M.")
+    println()
     R = reshape(A, nrows, ncols)
     S = randn(size(R))
     print_left_justified("R'*R ",                   l, c); @btime $R'*$R;
@@ -86,6 +150,52 @@ function runtests()
     print_left_justified("M'*R ",                   l, c); @btime $M'*$R;
     print_left_justified("R'*M ",                   l, c); @btime $R'*$M;
     println()
+    end
+    println("In the following tests, ")
+    println("M is a flat version of A and S is a random array of same size as R and M.")
+    println()
+    A1 = randn(dims)
+    A2 = randn(dims)
+    A0 = similar(A1)
+    print_left_justified("add0!(A0, A1, A2) ",      l, c); @btime add0!($A0, $A1, $A2);
+    print_left_justified("add1!(A0, A1, A2) ",      l, c); @btime add1!($A0, $A1, $A2);
+    B1 = randn(nelem) # true vector
+    B2 = randn(nelem) # true vector
+    B0 = similar(B1)  # true vector
+    print_left_justified("add0!(B0, B1, B2) ",      l, c); @btime add0!($B0, $B1, $B2);
+    print_left_justified("add1!(B0, B1, B2) ",      l, c); @btime add1!($B0, $B1, $B2);
+    V1 = flatten(A1, nelem)
+    V2 = flatten(A2, nelem)
+    V0 = flatten(A0, nelem)
+    print_left_justified("add0!(V0, V1, V2) ",      l, c); @btime add0!($V0, $V1, $V2);
+    print_left_justified("add1!(V0, V1, V2) ",      l, c); @btime add1!($V0, $V1, $V2);
+    R1 = reshape(A1, nelem)
+    R2 = reshape(A2, nelem)
+    R0 = reshape(A0, nelem)
+    print_left_justified("add0!(R0, R1, R2) ",      l, c); @btime add0!($R0, $R1, $R2);
+    print_left_justified("add1!(R0, R1, R2) ",      l, c); @btime add1!($R0, $R1, $R2);
+    C1 = randn(nrows,ncols) # true matrix
+    C2 = randn(nrows,ncols) # true matrix
+    C0 = similar(C1)        # true matrix
+    print_left_justified("add0!(C0, C1, C2) ",      l, c); @btime add0!($C0, $C1, $C2);
+    print_left_justified("add1!(C0, C1, C2) ",      l, c); @btime add1!($C0, $C1, $C2);
+    print_left_justified("add2!(C0, C1, C2) ",      l, c); @btime add2!($C0, $C1, $C2);
+    print_left_justified("add2p!(C0, C1, C2) ",     l, c); @btime add2p!($C0, $C1, $C2);
+    M1 = flatten(A1, nrows, ncols)
+    M2 = flatten(A2, nrows, ncols)
+    M0 = flatten(A0, nrows, ncols)
+    print_left_justified("add0!(M0, M1, M2) ",      l, c); @btime add0!($M0, $M1, $M2);
+    print_left_justified("add1!(M0, M1, M2) ",      l, c); @btime add1!($M0, $M1, $M2);
+    print_left_justified("add2!(M0, M1, M2) ",      l, c); @btime add2!($M0, $M1, $M2);
+    print_left_justified("add2p!(M0, M1, M2) ",     l, c); @btime add2p!($M0, $M1, $M2);
+    S1 = reshape(A1, nrows, ncols)
+    S2 = reshape(A2, nrows, ncols)
+    S0 = reshape(A0, nrows, ncols)
+    print_left_justified("add0!(S0, S1, S2) ",      l, c); @btime add0!($S0, $S1, $S2);
+    print_left_justified("add1!(S0, S1, S2) ",      l, c); @btime add1!($S0, $S1, $S2);
+    print_left_justified("add2!(S0, S1, S2) ",      l, c); @btime add2!($S0, $S1, $S2);
+    print_left_justified("add2p!(S0, S1, S2) ",     l, c); @btime add2p!($S0, $S1, $S2);
+
 end
 runtests();
 end # module
