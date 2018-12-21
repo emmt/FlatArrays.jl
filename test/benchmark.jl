@@ -31,7 +31,6 @@ function runtests()
 
     l = 30
     c = '.'
-
     println("In the following tests, A is a regular array, B and C are views of A,")
     println("B is flat, C is not flat, V is a flat vector from A and M is a flat")
     println("matrix from A.")
@@ -66,7 +65,6 @@ function runtests()
     print_left_justified("has_offset_axes(C) ",     l, c); @btime has_offset_axes($C);
     print_left_justified("has_offset_axes(V) ",     l, c); @btime has_offset_axes($V);
     print_left_justified("has_offset_axes(M) ",     l, c); @btime has_offset_axes($M);
-
     print_left_justified("reshape(A,nelem) ",       l, c); @btime reshape($A,$nelem);
     print_left_justified("flatten(A,nelem) ",       l, c); @btime flatten($A,$nelem);
     print_left_justified("reshape(A,nrows,ncols) ", l, c); @btime reshape($A,$nrows,$ncols);
@@ -77,7 +75,17 @@ function runtests()
     print_left_justified("isflat(V) ",              l, c); @btime isflat($V);
     print_left_justified("isflat(M) ",              l, c); @btime isflat($M);
     println()
-
+    println("In the following tests, A is a regular array, R is a reshaped version of A,")
+    println("M is a flat version of A and S is a random array of same size as R and M.")
+    R = reshape(A, nrows, ncols)
+    S = randn(size(R))
+    print_left_justified("R'*R ",                   l, c); @btime $R'*$R;
+    print_left_justified("S'*R ",                   l, c); @btime $S'*$R;
+    print_left_justified("R'*S ",                   l, c); @btime $R'*$S;
+    print_left_justified("M'*M ",                   l, c); @btime $M'*$M;
+    print_left_justified("M'*R ",                   l, c); @btime $M'*$R;
+    print_left_justified("R'*M ",                   l, c); @btime $R'*$M;
+    println()
 end
 runtests();
 end # module
