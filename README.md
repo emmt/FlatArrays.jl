@@ -56,7 +56,7 @@ To install FlatArrays, you must clone its repository:
 
 ```sh
 using Pkg
-Pkg.clone("https://github.com/emmt/FlatArrays.git")
+Pkg.clone("https://github.com/emmt/FlatArrays.jl.git")
 ```
 
 The FlatArrays package is pure Julia code and there is nothing to build.
