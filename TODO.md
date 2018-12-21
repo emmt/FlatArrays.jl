@@ -1,4 +1,5 @@
-  * Extend to more than 1 or 2 dimensional arrays.
+* Extend to more than 1 or 2 dimensional arrays.  Use `@generated` for number
+  of dimensions > 2.
 
 * `flatten` should have a *lazy* counterpart which just returns its
   argument if already suitable.
