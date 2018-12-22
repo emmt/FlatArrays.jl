@@ -186,7 +186,7 @@ function runtests()
     print_left_justified("  add1!(B0, B1, B2) ", l, c); @btime add1!($B0, $B1, $B2);
     print_left_justified("  addI!(B0, B1, B2) ", l, c); @btime addI!($B0, $B1, $B2);
     println()
-    println("Tests with regular FlatVector's of length $(nelem):")
+    println("Tests with FlatVector's of length $(nelem):")
     V1 = flatten(A1, nelem)
     V2 = flatten(A2, nelem)
     V0 = flatten(A0, nelem)
@@ -212,7 +212,7 @@ function runtests()
     print_left_justified("  add2p!(C0, C1, C2) ",l, c); @btime add2p!($C0, $C1, $C2);
     print_left_justified("  addI!(C0, C1, C2) ", l, c); @btime addI!($C0, $C1, $C2);
     println()
-    println("Tests with regular FlatMatrix's of size $((nrows, ncols)):")
+    println("Tests with FlatMatrix's of size $((nrows, ncols)):")
     M1 = flatten(A1, nrows, ncols)
     M2 = flatten(A2, nrows, ncols)
     M0 = flatten(A0, nrows, ncols)
