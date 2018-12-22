@@ -76,6 +76,18 @@ function add2p!(dest::AbstractArray{T,2},
     return dest
 end
 
+# Use CartesianIndex()
+function addI!(dest::AbstractArray{T,N},
+               A::AbstractArray{T,N},
+               B::AbstractArray{T,N}) where {T,N}
+    # Checks must be skipped because they take time.
+    #@assert axes(dest) == axes(A) == axes(B)
+    @inbounds @simd for i in CartesianIndices(dest)
+        dest[i] = A[i] + B[i]
+    end
+    return dest
+end
+
 function runtests()
     dims = (3,4,5,6,7)
     A = randn(dims)
@@ -151,50 +163,74 @@ function runtests()
     print_left_justified("R'*M ",                   l, c); @btime $R'*$M;
     println()
     end
-    println("In the following tests, ")
-    println("M is a flat version of A and S is a random array of same size as R and M.")
+    println("In the following tests:")
+    println(" - `add0!` uses `eachindex`;")
+    println(" - `add1!` uses 1D linear index;")
+    println(" - `add2!` uses 2D linear indices;")
+    println(" - `add2p!` uses 2D linear indices with a common stride for all arrays;")
+    println(" - `addI!` uses CartesianIndex;")
     println()
+    println("Tests with regular Array's of size $(dims):")
     A1 = randn(dims)
     A2 = randn(dims)
     A0 = similar(A1)
-    print_left_justified("add0!(A0, A1, A2) ",      l, c); @btime add0!($A0, $A1, $A2);
-    print_left_justified("add1!(A0, A1, A2) ",      l, c); @btime add1!($A0, $A1, $A2);
+    print_left_justified("  add0!(A0, A1, A2) ", l, c); @btime add0!($A0, $A1, $A2);
+    print_left_justified("  add1!(A0, A1, A2) ", l, c); @btime add1!($A0, $A1, $A2);
+    print_left_justified("  addI!(A0, A1, A2) ", l, c); @btime addI!($A0, $A1, $A2);
+    println()
+    println("Tests with regular Vector's of length $(nelem):")
     B1 = randn(nelem) # true vector
     B2 = randn(nelem) # true vector
     B0 = similar(B1)  # true vector
-    print_left_justified("add0!(B0, B1, B2) ",      l, c); @btime add0!($B0, $B1, $B2);
-    print_left_justified("add1!(B0, B1, B2) ",      l, c); @btime add1!($B0, $B1, $B2);
+    print_left_justified("  add0!(B0, B1, B2) ", l, c); @btime add0!($B0, $B1, $B2);
+    print_left_justified("  add1!(B0, B1, B2) ", l, c); @btime add1!($B0, $B1, $B2);
+    print_left_justified("  addI!(B0, B1, B2) ", l, c); @btime addI!($B0, $B1, $B2);
+    println()
+    println("Tests with regular FlatVector's of length $(nelem):")
     V1 = flatten(A1, nelem)
     V2 = flatten(A2, nelem)
     V0 = flatten(A0, nelem)
-    print_left_justified("add0!(V0, V1, V2) ",      l, c); @btime add0!($V0, $V1, $V2);
-    print_left_justified("add1!(V0, V1, V2) ",      l, c); @btime add1!($V0, $V1, $V2);
+    print_left_justified("  add0!(V0, V1, V2) ", l, c); @btime add0!($V0, $V1, $V2);
+    print_left_justified("  add1!(V0, V1, V2) ", l, c); @btime add1!($V0, $V1, $V2);
+    print_left_justified("  addI!(V0, V1, V2) ", l, c); @btime addI!($V0, $V1, $V2);
+    println()
+    println("Tests with reshaped Vector's of length $(nelem):")
     R1 = reshape(A1, nelem)
     R2 = reshape(A2, nelem)
     R0 = reshape(A0, nelem)
-    print_left_justified("add0!(R0, R1, R2) ",      l, c); @btime add0!($R0, $R1, $R2);
-    print_left_justified("add1!(R0, R1, R2) ",      l, c); @btime add1!($R0, $R1, $R2);
+    print_left_justified("  add0!(R0, R1, R2) ", l, c); @btime add0!($R0, $R1, $R2);
+    print_left_justified("  add1!(R0, R1, R2) ", l, c); @btime add1!($R0, $R1, $R2);
+    print_left_justified("  addI!(R0, R1, R2) ", l, c); @btime addI!($R0, $R1, $R2);
+    println()
+    println("Tests with regular Matrix's of size $((nrows, ncols)):")
     C1 = randn(nrows,ncols) # true matrix
     C2 = randn(nrows,ncols) # true matrix
     C0 = similar(C1)        # true matrix
-    print_left_justified("add0!(C0, C1, C2) ",      l, c); @btime add0!($C0, $C1, $C2);
-    print_left_justified("add1!(C0, C1, C2) ",      l, c); @btime add1!($C0, $C1, $C2);
-    print_left_justified("add2!(C0, C1, C2) ",      l, c); @btime add2!($C0, $C1, $C2);
-    print_left_justified("add2p!(C0, C1, C2) ",     l, c); @btime add2p!($C0, $C1, $C2);
+    print_left_justified("  add0!(C0, C1, C2) ", l, c); @btime add0!($C0, $C1, $C2);
+    print_left_justified("  add1!(C0, C1, C2) ", l, c); @btime add1!($C0, $C1, $C2);
+    print_left_justified("  add2!(C0, C1, C2) ", l, c); @btime add2!($C0, $C1, $C2);
+    print_left_justified("  add2p!(C0, C1, C2) ",l, c); @btime add2p!($C0, $C1, $C2);
+    print_left_justified("  addI!(C0, C1, C2) ", l, c); @btime addI!($C0, $C1, $C2);
+    println()
+    println("Tests with regular FlatMatrix's of size $((nrows, ncols)):")
     M1 = flatten(A1, nrows, ncols)
     M2 = flatten(A2, nrows, ncols)
     M0 = flatten(A0, nrows, ncols)
-    print_left_justified("add0!(M0, M1, M2) ",      l, c); @btime add0!($M0, $M1, $M2);
-    print_left_justified("add1!(M0, M1, M2) ",      l, c); @btime add1!($M0, $M1, $M2);
-    print_left_justified("add2!(M0, M1, M2) ",      l, c); @btime add2!($M0, $M1, $M2);
-    print_left_justified("add2p!(M0, M1, M2) ",     l, c); @btime add2p!($M0, $M1, $M2);
+    print_left_justified("  add0!(M0, M1, M2) ", l, c); @btime add0!($M0, $M1, $M2);
+    print_left_justified("  add1!(M0, M1, M2) ", l, c); @btime add1!($M0, $M1, $M2);
+    print_left_justified("  add2!(M0, M1, M2) ", l, c); @btime add2!($M0, $M1, $M2);
+    print_left_justified("  add2p!(M0, M1, M2) ",l, c); @btime add2p!($M0, $M1, $M2);
+    print_left_justified("  addI!(M0, M1, M2) ", l, c); @btime addI!($M0, $M1, $M2);
+    println()
+    println("Tests with reshaped Matrix's of size $((nrows, ncols)):")
     S1 = reshape(A1, nrows, ncols)
     S2 = reshape(A2, nrows, ncols)
     S0 = reshape(A0, nrows, ncols)
-    print_left_justified("add0!(S0, S1, S2) ",      l, c); @btime add0!($S0, $S1, $S2);
-    print_left_justified("add1!(S0, S1, S2) ",      l, c); @btime add1!($S0, $S1, $S2);
-    print_left_justified("add2!(S0, S1, S2) ",      l, c); @btime add2!($S0, $S1, $S2);
-    print_left_justified("add2p!(S0, S1, S2) ",     l, c); @btime add2p!($S0, $S1, $S2);
+    print_left_justified("  add0!(S0, S1, S2) ", l, c); @btime add0!($S0, $S1, $S2);
+    print_left_justified("  add1!(S0, S1, S2) ", l, c); @btime add1!($S0, $S1, $S2);
+    print_left_justified("  add2!(S0, S1, S2) ", l, c); @btime add2!($S0, $S1, $S2);
+    print_left_justified("  add2p!(S0, S1, S2) ",l, c); @btime add2p!($S0, $S1, $S2);
+    print_left_justified("  addI!(S0, S1, S2) ", l, c); @btime addI!($S0, $S1, $S2);
 
 end
 runtests();
