@@ -119,6 +119,10 @@ end
     @test samevalues(B, V, true)
     @test samevalues(flatten(V1,length(V1)), V1, true)
     @test samevalues(flatten(V2,length(V2)), V2, true)
+    @test_throws BoundsError V[-1]
+    @test_throws BoundsError V[length(V)+1]
+    @test_throws BoundsError M[1,0]
+    @test_throws BoundsError M[nrows+1,0] == M[1,1]
 end
 
 end # module

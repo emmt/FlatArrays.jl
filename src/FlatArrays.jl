@@ -116,31 +116,53 @@ stride(A::FlatMatrix, d::Integer) = (d == 1 ? 1 :
                                      d >= 3 ? length(A) :
                                      error("dimension out of range"))
 
+# Indexation.
+
 @inline @propagate_inbounds getindex(A::AbstractFlatArray, i) =
-    getindex(A, _index(A, i))
+    getindex(A, _index1(A, i)...)
+
 @inline @propagate_inbounds getindex(A::AbstractFlatArray, i, j) =
-    getindex(A, _index(A, i, j))
-@inline @propagate_inbounds function getindex(A::AbstractFlatArray, i::Int)
+    getindex(A, _index1(A, i, j)...)
+
+@inline function getindex(A::AbstractFlatArray, i::Int)
     @boundscheck checkbounds(A.parent, i)
     @inbounds val = A.parent[i]
     return val
 end
 
+@inline function getindex(A::AbstractFlatArray, i::Int, j::Int)
+    @boundscheck checkbounds(A.parent, i, j)
+    @inbounds val = A.parent[_index2(A, i, j)]
+    return val
+end
+
 @inline @propagate_inbounds setindex!(A::AbstractFlatArray, val, i) =
-    setindex!(A, val, _index(A, i))
+    setindex!(A, val, _index1(A, i)...)
+
 @inline @propagate_inbounds setindex!(A::AbstractFlatArray, val, i, j) =
-    setindex!(A, val, _index(A, i, j))
-@inline @propagate_inbounds function setindex!(A::AbstractFlatArray, val, i::Int)
+    setindex!(A, val, _index1(A, i, j)...)
+
+@inline function setindex!(A::AbstractFlatArray, val, i::Int)
     @boundscheck checkbounds(A.parent, i)
     @inbounds A.parent[i] = val
     return val
 end
 
-@inline _index(A::AbstractFlatArray, i::Integer) = Int(i)
-@inline _index(A::FlatMatrix, i::Int, j::Int) = i + A.dims[1]*(j - 1)
-@inline _index(A::FlatMatrix, i::Integer, j::Integer) = _index(A, Int(i), Int(j))
-@inline _index(A::FlatVector, I::CartesianIndex{1}) = I[1]
-@inline _index(A::FlatMatrix, I::CartesianIndex{2}) = _index(A, I[1], I[2])
+@inline function setindex!(A::AbstractFlatArray, val, i::Int, j::Int)
+    @boundscheck checkbounds(A.parent, i, j)
+    @inbounds A.parent[_index2(A, i, j)] = val
+    return val
+end
+
+# First pass on indices to make them integers (must return a tuple).
+@inline _index1(A::AbstractFlatArray, i::Integer) = (Int(i),)
+@inline _index1(A::AbstractFlatArray, i::Integer, j::Integer) = (Int(i), Int(j))
+@inline _index1(A::AbstractFlatArray{<:Any,1}, I::CartesianIndex{1}) = (I[1],)
+@inline _index1(A::AbstractFlatArray{<:Any,2}, I::CartesianIndex{2}) = (I[1], I[2])
+
+# Second pass on indices to make them a single index.
+@inline _index2(A::FlatVector, i::Int, j::Int) = i + A.nelem*(j - 1)
+@inline _index2(A::FlatMatrix, i::Int, j::Int) = i + A.dims[1]*(j - 1)
 
 """
 
