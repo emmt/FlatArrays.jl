@@ -19,6 +19,8 @@ that their total size do not exceed that of the input array.  This is like
 than calling `reshape` (by a factor ~ 7 for a vector, ~ 5 for a matrix).  This
 may be significant for very small arrays.
 
+Indexing of FlatArray's is as fast as regular Julia arrays.
+
 I found FlatArrays useful to pretend that multidimensional arrays are vectors
 or matrices so as to automatically benefit from very fast linear algebra
 methods (*e.g.*, BLAS or LAPACK).  Again, this seems like `reshape` except that

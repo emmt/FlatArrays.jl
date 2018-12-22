@@ -6,3 +6,7 @@
 
 * `flatten(A)` with no dimensions yields a *flat* array of same dimensions
   as `A`.
+
+* Implement `checkbound` and other related methods on FlatArray's.
+
+* Allow for a mixture of `CartesianIndex` and integers.
