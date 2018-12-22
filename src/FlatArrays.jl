@@ -7,6 +7,7 @@ export
     isflat
 
 using Base:
+    @propagate_inbounds,
     OneTo
 
 import Base:
@@ -115,17 +116,21 @@ stride(A::FlatMatrix, d::Integer) = (d == 1 ? 1 :
                                      d >= 3 ? length(A) :
                                      error("dimension out of range"))
 
-@inline getindex(A::AbstractFlatArray, i) = getindex(A, _index(A, i))
-@inline getindex(A::AbstractFlatArray, i, j) = getindex(A, _index(A, i, j))
-@inline function getindex(A::AbstractFlatArray, i::Int)
+@inline @propagate_inbounds getindex(A::AbstractFlatArray, i) =
+    getindex(A, _index(A, i))
+@inline @propagate_inbounds getindex(A::AbstractFlatArray, i, j) =
+    getindex(A, _index(A, i, j))
+@inline @propagate_inbounds function getindex(A::AbstractFlatArray, i::Int)
     @boundscheck checkbounds(A.parent, i)
     @inbounds val = A.parent[i]
     return val
 end
 
-@inline setindex!(A::AbstractFlatArray, val, i) = setindex!(A, val, _index(A, i))
-@inline setindex!(A::AbstractFlatArray, val, i, j) = setindex!(A, val, _index(A, i, j))
-@inline function setindex!(A::AbstractFlatArray, val, i::Int)
+@inline @propagate_inbounds setindex!(A::AbstractFlatArray, val, i) =
+    setindex!(A, val, _index(A, i))
+@inline @propagate_inbounds setindex!(A::AbstractFlatArray, val, i, j) =
+    setindex!(A, val, _index(A, i, j))
+@inline @propagate_inbounds function setindex!(A::AbstractFlatArray, val, i::Int)
     @boundscheck checkbounds(A.parent, i)
     @inbounds A.parent[i] = val
     return val
