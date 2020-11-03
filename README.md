@@ -1,7 +1,7 @@
 # FlatArrays
 
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE.md)
-[![Build Status](https://travis-ci.org/emmt/FlatArrays.jl.svg?branch=master)](https://travis-ci.org/emmt/FlatArrays.jl)
+[![Build Status](https://travis-ci.com/emmt/FlatArrays.jl.svg?branch=master)](https://travis-ci.com/emmt/FlatArrays.jl)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/emmt/FlatArrays.jl?branch=master)](https://ci.appveyor.com/project/emmt/FlatArrays-jl/branch/master)
 [![Coverage Status](https://coveralls.io/repos/emmt/FlatArrays.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/emmt/FlatArrays.jl?branch=master)
 [![codecov.io](http://codecov.io/github/emmt/FlatArrays.jl/coverage.svg?branch=master)](http://codecov.io/github/emmt/FlatArrays.jl?branch=master)
